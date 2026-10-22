@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="1000" height="500" role="img" aria-labelledby="title desc">
+  <title id="title">n8n WhatsApp AI agent architecture</title>
+  <desc id="desc">Inbound WhatsApp message is normalized, checked against the handoff state, transcribed if it is a voice note, answered by an AI agent with memory and tools, and sent back over WhatsApp. A handoff tool pauses the bot and alerts Slack.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/>
+    </marker>
+    <style>
+      text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; fill: #e6edf3; }
+      .t { font-size: 14px; font-weight: 700; }
+      .s { font-size: 11px; fill: #8b949e; }
+      .lbl { font-size: 11px; fill: #22d3ee; }
+      .box { fill: #161b22; stroke: #30363d; stroke-width: 1.5; }
+      .acc { fill: #0b2a33; stroke: #22d3ee; stroke-width: 2; }
+      .flow { stroke: #22d3ee; stroke-width: 2; fill: none; }
+      .sub { stroke: #8b949e; stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+    </style>
+  </defs>
+
+  <rect width="1000" height="500" fill="#0d1117"/>
+
+  <text x="30" y="40" class="t" style="font-size:18px">n8n WhatsApp AI agent</text>
+  <text x="30" y="60" class="s">message lifecycle · Northwind Dental demo</text>
+
+  <!-- main row -->
+  <rect class="box" x="30" y="150" width="130" height="56" rx="8"/>
+  <text x="95" y="174" class="t" text-anchor="middle">WhatsApp</text>
+  <text x="95" y="192" class="s" text-anchor="middle">Cloud API webhook</text>
+
+  <rect class="box" x="190" y="150" width="140" height="56" rx="8"/>
+  <text x="260" y="174" class="t" text-anchor="middle">Normalize</text>
+  <text x="260" y="192" class="s" text-anchor="middle">text | audio | other</text>
+
+  <rect class="box" x="360" y="150" width="150" height="56" rx="8"/>
+  <text x="435" y="174" class="t" text-anchor="middle">Handoff gate</text>
+  <text x="435" y="192" class="s" text-anchor="middle">Data Table: paused?</text>
+
+  <rect class="box" x="540" y="150" width="140" height="56" rx="8"/>
+  <text x="610" y="174" class="t" text-anchor="middle">Voice note?</text>
+  <text x="610" y="192" class="s" text-anchor="middle">Whisper transcribe</text>
+
+  <rect class="acc" x="710" y="146" width="130" height="64" rx="10"/>
+  <text x="775" y="174" class="t" text-anchor="middle">AI Agent</text>
+  <text x="775" y="193" class="s" text-anchor="middle">LLM + tool calls</text>
+
+  <rect class="box" x="870" y="150" width="110" height="56" rx="8"/>
+  <text x="925" y="174" class="t" text-anchor="middle">Reply</text>
+  <text x="925" y="192" class="s" text-anchor="middle">WhatsApp send</text>
+  <text x="925" y="228" class="s" text-anchor="middle">on error: fallback</text>
+  <text x="925" y="242" class="s" text-anchor="middle">+ Slack alert</text>
+
+  <path class="flow" d="M160,178 H188" marker-end="url(#arrow)"/>
+  <path class="flow" d="M330,178 H358" marker-end="url(#arrow)"/>
+  <path class="flow" d="M510,178 H538" marker-end="url(#arrow)"/>
+  <path class="flow" d="M680,178 H708" marker-end="url(#arrow)"/>
+  <path class="flow" d="M840,178 H868" marker-end="url(#arrow)"/>
+
+  <!-- paused branch -->
+  <path class="flow" d="M435,206 V258" marker-end="url(#arrow)"/>
+  <text x="443" y="236" class="lbl">paused</text>
+  <rect class="box" x="360" y="260" width="150" height="56" rx="8"/>
+  <text x="435" y="284" class="t" text-anchor="middle">Bot stays silent</text>
+  <text x="435" y="302" class="s" text-anchor="middle">human in control</text>
+
+  <!-- memory -->
+  <rect class="box" x="700" y="74" width="150" height="48" rx="8"/>
+  <text x="775" y="94" class="t" text-anchor="middle">Memory</text>
+  <text x="775" y="111" class="s" text-anchor="middle">Postgres · key = phone</text>
+  <path class="sub" d="M775,122 V144"/>
+
+  <!-- tools -->
+  <path class="sub" d="M775,210 V258"/>
+  <text x="783" y="240" class="s">tools</text>
+  <rect class="box" x="600" y="260" width="180" height="44" rx="8"/>
+  <text x="690" y="287" class="t" text-anchor="middle">get_faq</text>
+  <rect class="box" x="790" y="260" width="190" height="44" rx="8"/>
+  <text x="885" y="287" class="t" text-anchor="middle">check_availability</text>
+  <rect class="box" x="600" y="314" width="180" height="44" rx="8"/>
+  <text x="690" y="341" class="t" text-anchor="middle">book_call</text>
+  <rect class="acc" x="790" y="314" width="190" height="44" rx="8"/>
+  <text x="885" y="341" class="t" text-anchor="middle">handoff_to_human</text>
+  <text x="690" y="374" class="s" text-anchor="middle">check_availability + book_call: Google Calendar</text>
+
+  <!-- handoff sub-workflow -->
+  <path class="flow" d="M885,358 V398" marker-end="url(#arrow)"/>
+  <rect class="box" x="600" y="400" width="380" height="56" rx="8"/>
+  <text x="790" y="424" class="t" text-anchor="middle">Handoff sub-workflow</text>
+  <text x="790" y="442" class="s" text-anchor="middle">pause bot 24h (Data Table) · alert team in Slack</text>
+
+  <path class="sub" d="M600,428 H345 V198 H356" marker-end="url(#arrow-muted)"/>
+  <text x="372" y="420" class="s">writes paused state</text>
+
+  <!-- error workflow -->
+  <rect class="box" x="30" y="400" width="250" height="56" rx="8"/>
+  <text x="155" y="424" class="t" text-anchor="middle">Error Trigger workflow</text>
+  <text x="155" y="442" class="s" text-anchor="middle">any failure → Slack alert</text>
+</svg>

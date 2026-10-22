@@ -1,0 +1,242 @@
+{
+  "name": "WhatsApp Agent - Handoff To Human",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## handoff_to_human tool\nCalled by the AI Agent. Pauses the bot for this contact (Data Table upsert), alerts the team in Slack, and returns a short confirmation string to the agent.\n\nPause length: change the `+ 24 hours` expression in **Pause Bot**. To resume earlier, set `paused = false` on the row.",
+        "width": 560,
+        "height": 220,
+        "color": 7
+      },
+      "id": "f7bcce0d-6ca1-4736-a77f-bc08f093e70b",
+      "name": "Note: Handoff",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "phone",
+              "type": "string"
+            },
+            {
+              "name": "contact_name",
+              "type": "string"
+            },
+            {
+              "name": "reason",
+              "type": "string"
+            },
+            {
+              "name": "summary",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "f6ccefd1-cb8d-4907-a026-8686f44348c2",
+      "name": "When Called By Agent",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -240,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "whatsapp_contact_state"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "phone",
+              "condition": "eq",
+              "keyValue": "={{ $json.phone }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "phone": "={{ $json.phone }}",
+            "paused": true,
+            "paused_until": "={{ $now.plus({ hours: 24 }).toISO() }}",
+            "reason": "={{ $json.reason }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paused",
+              "displayName": "paused",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paused_until",
+              "displayName": "paused_until",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c29bf037-849d-4a54-af92-fce879e8cbae",
+      "name": "Pause Bot",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "whatsapp-handoffs"
+        },
+        "messageType": "text",
+        "text": "=:raising_hand: *WhatsApp handoff* - {{ $('When Called By Agent').item.json.contact_name || 'Unknown contact' }} (+{{ $('When Called By Agent').item.json.phone }})\n*Reason:* {{ $('When Called By Agent').item.json.reason }}\n*Summary:* {{ $('When Called By Agent').item.json.summary }}\n\nThe bot is paused for this contact for 24h. Reply to them from your WhatsApp inbox. To resume the bot, set `paused = false` for this phone in the `whatsapp_contact_state` Data Table.",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "id": "9c5050ef-4e93-4543-a81d-a11b08fbeb98",
+      "name": "Notify Team",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        240,
+        40
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "REPLACE_WITH_SLACKAPI_ID",
+          "name": "Slack account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3f14bb46-99cf-43c3-a02d-319a325290f7",
+              "name": "response",
+              "value": "Handoff registered. The assistant is now paused for this contact and the team has been notified. Tell the person a team member will continue here on WhatsApp during clinic hours.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "913b6cfd-7f3c-4c99-ae0a-f71d28ae010f",
+      "name": "Return To Agent",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        480,
+        40
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called By Agent": {
+      "main": [
+        [
+          {
+            "node": "Pause Bot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pause Bot": {
+      "main": [
+        [
+          {
+            "node": "Notify Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Team": {
+      "main": [
+        [
+          {
+            "node": "Return To Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
