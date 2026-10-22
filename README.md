@@ -128,7 +128,7 @@ The agent decides *when* to escalate (prompt rules: asks for a person, emergency
 - **No deduplication.** Meta can redeliver a webhook; a busy instance may occasionally answer the same message twice. Store `messageId` and skip repeats if this matters to you.
 - **Bursts of messages** from one contact are answered one by one, not batched.
 - **Images and documents** are not analysed; the agent asks the contact to describe them.
-- **Not validated in a live instance as shipped.** Node types and versions were checked against the n8n node catalog, but you must attach credentials and run a test conversation before going live.
+- **Only partly tested in a live instance.** All three workflows were import-tested on n8n 2.44.5: every node type and version is recognized, and parameters and connections survive import with no parameter issues. The ingest and handoff path ran locally with sample webhook payloads (text, voice note, status callback, image) and a real Data Table. That covers Normalize Message, the handoff gate, the text and transcript merge, and the handoff sub-workflow's Data Table upsert. The WhatsApp, OpenAI, Postgres, Google Calendar and Slack nodes, and the AI Agent itself, were not run because they need real credentials. Attach credentials and run a test conversation before going live.
 - The FAQ and clinic are fictional. Nothing here is medical advice.
 
 ## License
